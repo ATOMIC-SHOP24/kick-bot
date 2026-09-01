@@ -13,7 +13,7 @@ public class AutoKickBot : ChatBot
     // =========================================================================
     // YOUR PASSWORD
     // =========================================================================
-    private string myPassword = "asd12345"; 
+    private string myPassword = "XXX0XXX"; 
 
     // =========================================================================
     // TARGET PLAYERS TO KICK
@@ -32,11 +32,16 @@ public class AutoKickBot : ChatBot
         "Relayy4"
     };
 
+    // Cooldown dictionary to prevent kick command spamming in the same second
+    private readonly System.Collections.Generic.Dictionary<string, System.DateTime> lastKicked = 
+        new System.Collections.Generic.Dictionary<string, System.DateTime>(System.StringComparer.OrdinalIgnoreCase);
+
     public override void Initialize()
     {
         isRunning = true;
         needsLogin = true;
         isReady = false;
+        lastKicked.Clear();
 
         LogToConsole("==================================================");
         LogToConsole("      AUTO-KICK MODERATION BOT LOADED            ");
@@ -56,15 +61,7 @@ public class AutoKickBot : ChatBot
         }
     }
 
-    // Triggered when a player connects to the server
-    public override void OnPlayerJoin(string player, System.Guid uuid)
-    {
-        if (!isReady || !isRunning) return;
-
-        CheckAndKickPlayer(player);
-    }
-
-    // Periodic check in case the event is missed or player is already present
+    // Continuously scans the tab-list for target players
     public override void Update()
     {
         if (!isReady || !isRunning) return;
@@ -87,11 +84,21 @@ public class AutoKickBot : ChatBot
     {
         if (string.IsNullOrWhiteSpace(playerName)) return;
 
-        // Clean formatting codes if any exist in the player name
         string cleanName = playerName.Trim();
 
         if (targetPlayers.Contains(cleanName))
         {
+            // Only send the kick command if we haven't tried kicking them in the last 10 seconds
+            if (lastKicked.TryGetValue(cleanName, out System.DateTime lastTime))
+            {
+                if ((System.DateTime.Now - lastTime).TotalSeconds < 10)
+                {
+                    return;
+                }
+            }
+
+            lastKicked[cleanName] = System.DateTime.Now;
+
             LogToConsole("==================================================");
             LogToConsole("[TARGET DETECTED] " + cleanName + " found on server!");
             LogToConsole("[ACTION] Executing kick command...");
@@ -122,7 +129,6 @@ public class AutoKickBot : ChatBot
         try { PerformInternalCommand(cmd); } catch { }
     }
 
-    // Updated: Checks for X: 5, Z: 273 or the base coordinates
     private bool IsAtLifesteal(Location loc)
     {
         // Check if at X: 5, Z: 273 (within a 10-block radius)
