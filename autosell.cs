@@ -13,7 +13,7 @@ public class AutoKickBot : ChatBot
     // =========================================================================
     // YOUR PASSWORD
     // =========================================================================
-    private string myPassword = "XXX0XXX"; 
+    private string myPassword = "asd12345"; 
 
     // =========================================================================
     // TARGET PLAYERS TO KICK
